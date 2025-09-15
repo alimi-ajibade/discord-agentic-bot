@@ -1,7 +1,7 @@
 import asyncio
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
-from loguru import logger
+from src.core.logging import logger
 from src.core.config import settings
 from src.core.bot import bot
 

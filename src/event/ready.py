@@ -1,6 +1,6 @@
 
 from src.core.bot import bot
-from loguru import logger
+from src.core.logging import logger
 
 @bot.event
 async def on_ready():
