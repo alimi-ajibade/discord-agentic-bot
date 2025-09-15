@@ -6,6 +6,8 @@ class Settings(BaseSettings):
 
     GEMINI_API_KEY: str
 
+    DISCORD_TOKEN: str
+
     model_config = SettingsConfigDict(env_file="./.env")
 
 
