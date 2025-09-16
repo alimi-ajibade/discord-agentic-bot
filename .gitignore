@@ -207,3 +207,4 @@ marimo/_lsp/
 __marimo__/
 
 .ruff_cache
+private
