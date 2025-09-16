@@ -3,7 +3,6 @@ import asyncio
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
 
-from src.bot import commands, events
 from src.core.bot import bot
 from src.core.config import settings
 from src.core.logging import logger
