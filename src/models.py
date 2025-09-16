@@ -47,9 +47,7 @@ class Message(SharedModel):
     discord_message_id: Mapped[str] = mapped_column(String, nullable=False)
     discord_user_id: Mapped[str] = mapped_column(String, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    embedding_vector: Mapped[Vector] = mapped_column(
-        Vector(768), nullable=False, unique=False
-    )
+    embedding: Mapped[Vector] = mapped_column(Vector(768), nullable=True, unique=False)
     channel_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("channels.id"), nullable=False
     )
@@ -63,14 +61,14 @@ class Message(SharedModel):
     __table_args__ = (
         Index(
             "ix_messages_embedding_vector_cosine",
-            embedding_vector,
+            embedding,
             postgresql_using="ivfflat",
             postgresql_with={"lists": 100},
             postgresql_ops={"embedding_vector": "vector_cosine_ops"},
         ),
         Index(
             "ix_messages_embedding_vector_l2",
-            embedding_vector,
+            embedding,
             postgresql_using="ivfflat",
             postgresql_with={"lists": 100},
             postgresql_ops={"embedding_vector": "vector_l2_ops"},
