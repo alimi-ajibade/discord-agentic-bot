@@ -49,10 +49,12 @@ class Message(SharedModel):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     embedding: Mapped[Vector] = mapped_column(Vector(768), nullable=True, unique=False)
     channel_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("channels.id"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("channels.id", ondelete="CASCADE"),
+        nullable=False,
     )
     user_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
     user: Mapped["User"] = relationship(back_populates="messages")
@@ -92,15 +94,17 @@ class Channel(SharedModel):
     discord_channel_id: Mapped[str] = mapped_column(String, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=True)
     guild_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("guilds.id"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("guilds.id", ondelete="CASCADE"),
+        nullable=False,
     )
     agent_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("agents.id"), unique=True, nullable=False
     )
 
-    agent: Mapped["Agent"] = relationship(back_populates="channels")
+    agent: Mapped["Agent"] = relationship(back_populates="channel")
     guild: Mapped["Guild"] = relationship(back_populates="channels")
-    messages: Mapped[list["Message"]] = relationship(back_populates="channels")
+    messages: Mapped[list["Message"]] = relationship(back_populates="channel")
 
 
 class Agent(SharedModel):
@@ -110,8 +114,8 @@ class Agent(SharedModel):
     discord_user_id: Mapped[str] = mapped_column(String, nullable=False)
 
     guild_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("guilds.id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("guilds.id", ondelete="CASCADE"), nullable=False
     )
 
     guild: Mapped["Guild"] = relationship(back_populates="agents")
-    channel: Mapped["Channel"] = relationship(back_populates="agents")
+    channel: Mapped["Channel"] = relationship(back_populates="agent")
