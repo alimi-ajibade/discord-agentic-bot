@@ -48,3 +48,8 @@ app = FastAPI(
     lifespan=lifespan,
     swagger_ui_parameters={"persistAuthorization": True},
 )
+
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
