@@ -1,11 +1,13 @@
 import asyncio
+
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
-from src.core.logging import logger
-from src.core.config import settings
-from src.core.bot import bot
 
-from src import event, command
+from src.bot import commands, events
+from src.core.bot import bot
+from src.core.config import settings
+from src.core.logging import logger
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -16,11 +18,11 @@ async def lifespan(app: FastAPI):
         bot_task = asyncio.create_task(bot.start(token))
     else:
         logger.error("DISCORD_BOT_TOKEN not found")
-    
+
     yield
-    
+
     # Clean up on shutdown
-    if 'bot_task' in locals() and not bot_task.done():
+    if "bot_task" in locals() and not bot_task.done():
         await bot.close()
         bot_task.cancel()
         try:
