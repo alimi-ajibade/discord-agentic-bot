@@ -1,5 +1,5 @@
+from src.bot.bot import bot
 from src.core import logger
-from src.core.bot import bot
 
 
 @bot.command()
