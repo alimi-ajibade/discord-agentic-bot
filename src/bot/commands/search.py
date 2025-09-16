@@ -1,4 +1,4 @@
-from bot.bot import bot
+from src.bot.bot import bot
 
 
 @bot.command()
