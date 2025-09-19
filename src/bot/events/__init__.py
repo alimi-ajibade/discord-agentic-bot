@@ -1,1 +1,1 @@
-from . import message, ready
+from . import guild, message, ready
