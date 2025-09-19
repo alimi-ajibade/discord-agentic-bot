@@ -40,9 +40,14 @@ async def on_message(message):
             db_channel = result.scalar_one_or_none()
 
             if not db_channel:
-                logger.warning(f'Channel {message.channel.name} not found in database, skipping message save')
-                await bot.process_commands(message)
-                return
+                db_channel = Channel(
+                    discord_channel_id=str(message.channel.id),
+                    name=message.channel.name
+                )
+                session.add(db_channel)
+                await session.commit()
+                await session.refresh(db_channel)
+                logger.info(f'Created channel {message.channel.name} in database')
 
             db_message = Message(
                 discord_message_id=str(message.id),
