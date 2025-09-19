@@ -63,7 +63,9 @@ async def generate_embeddings(batch_size: int = 50, sleep_seconds: int = 5) -> N
         async with AsyncSessionLocal.begin() as session:
             # Fetch messages without embeddings
             result = await session.execute(
-                select(Message).where(Message.embedding.is_(None)).limit(batch_size)  # noqa: E711
+                select(Message)
+                .where(Message.embedding.is_(None), Message.content.is_not(None))
+                .limit(batch_size)
             )
             messages_to_embed = result.scalars().all()
 
