@@ -7,8 +7,9 @@ from sqlalchemy import select
 from src.core import logger
 from src.core.database import AsyncSessionLocal
 from src.models import Message
+from src.core.config import settings
 
-client = genai.Client()
+client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
 
 def get_embedding(text: str) -> ContentEmbedding | None:
