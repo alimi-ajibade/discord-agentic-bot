@@ -1,2 +1,2 @@
+from . import commands, events
 from .bot import bot
-from . import events, commands

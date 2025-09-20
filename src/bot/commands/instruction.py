@@ -11,7 +11,7 @@ async def instruction(ctx, *, prompt: str):
     """Instruction command that sets or updates agent instructions for this channel."""
     if ctx.author != ctx.guild.owner:
         await ctx.send(
-            f'{ctx.author.mention}, you are not authorized to use this command 😒.'
+            f"{ctx.author.mention}, you are not authorized to use this command 😒."
         )
         try:
             await ctx.guild.owner.send(
@@ -30,7 +30,9 @@ async def instruction(ctx, *, prompt: str):
             db_channel = result.scalar_one_or_none()
 
             if not db_channel:
-                await ctx.send("❌ Channel not found in database. Please make sure the bot has joined this server properly.")
+                await ctx.send(
+                    "❌ Channel not found in database. Please make sure the bot has joined this server properly."
+                )
                 return
 
             # Check if channel already has an agent
@@ -51,16 +53,22 @@ async def instruction(ctx, *, prompt: str):
                             f"✅ **Agent Updated** in {ctx.guild.name} #{ctx.channel.name}\n"
                             f"**New instruction:** {prompt}"
                         )
-                        
+
                         if ctx.message:
                             await ctx.message.delete()
                     except Exception as e:
                         logger.error(f"Error sending DM to guild owner: {e}")
-                        await ctx.send("✅ Agent instructions updated! (DM failed - check bot permissions)")
+                        await ctx.send(
+                            "✅ Agent instructions updated! (DM failed - check bot permissions)"
+                        )
 
-                    logger.info(f"Updated agent {db_agent.id} instruction in channel {ctx.channel.name}")
+                    logger.info(
+                        f"Updated agent {db_agent.id} instruction in channel {ctx.channel.name}"
+                    )
                 else:
-                    await ctx.send("❌ Error: Agent reference is invalid. Creating new agent...")
+                    await ctx.send(
+                        "❌ Error: Agent reference is invalid. Creating new agent..."
+                    )
                     db_channel.agent_id = None
                     await session.commit()
 
@@ -69,7 +77,7 @@ async def instruction(ctx, *, prompt: str):
                 db_agent = Agent(
                     instruction=prompt,
                     discord_user_id=str(ctx.author.id),
-                    guild_id=db_channel.guild_id
+                    guild_id=db_channel.guild_id,
                 )
                 session.add(db_agent)
                 await session.commit()
@@ -79,22 +87,27 @@ async def instruction(ctx, *, prompt: str):
                 db_channel.agent_id = db_agent.id
                 await session.commit()
 
-                
                 try:
                     await ctx.guild.owner.send(
                         f"✅ **New Agent Created** in {ctx.guild.name} #{ctx.channel.name}\n"
                         f"**Instruction:** {prompt}"
                     )
-                    
+
                     if ctx.message:
                         await ctx.message.delete()
                 except Exception as e:
                     logger.error(f"Error sending DM to guild owner: {e}")
-                    await ctx.send("✅ New agent created! (DM failed - check bot permissions)")
+                    await ctx.send(
+                        "✅ New agent created! (DM failed - check bot permissions)"
+                    )
 
-                logger.info(f"Created new agent {db_agent.id} for channel {ctx.channel.name}")
+                logger.info(
+                    f"Created new agent {db_agent.id} for channel {ctx.channel.name}"
+                )
 
         except Exception as e:
             await session.rollback()
             logger.error(f"Error managing agent for instruction command: {e}")
-            await ctx.send("❌ An error occurred while saving the instruction. Please try again.")
+            await ctx.send(
+                "❌ An error occurred while saving the instruction. Please try again."
+            )

@@ -3,7 +3,7 @@ import asyncio
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
 
-from src.bot import commands, events, bot  # noqa: F401
+from src.bot import bot, commands, events  # noqa: F401
 from src.core.config import settings
 from src.core.logging import logger
 from src.utils.embedding import generate_embeddings

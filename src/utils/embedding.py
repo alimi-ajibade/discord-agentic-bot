@@ -5,9 +5,9 @@ from google.genai.types import ContentEmbedding, EmbedContentConfig
 from sqlalchemy import select
 
 from src.core import logger
+from src.core.config import settings
 from src.core.database import AsyncSessionLocal
 from src.models import Message
-from src.core.config import settings
 
 client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
