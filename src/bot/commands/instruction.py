@@ -37,7 +37,6 @@ async def instruction(ctx, *, prompt: str):
 
             # Check if channel already has an agent
             if db_channel.agent_id:
-                # Update existing agent's instruction
                 result = await session.execute(
                     select(Agent).where(Agent.id == db_channel.agent_id)
                 )
@@ -46,8 +45,8 @@ async def instruction(ctx, *, prompt: str):
                 if db_agent:
                     db_agent.instruction = prompt
                     await session.commit()
+                    await session.refresh(db_agent)
 
-                    # Send confirmation via DM to guild owner
                     try:
                         await ctx.guild.owner.send(
                             f"✅ **Agent Updated** in {ctx.guild.name} #{ctx.channel.name}\n"
@@ -71,28 +70,27 @@ async def instruction(ctx, *, prompt: str):
                     )
                     db_channel.agent_id = None
                     await session.commit()
-
-            # Create new agent if no existing agent
-            if not db_channel.agent_id:
+            else:
                 db_agent = Agent(
                     instruction=prompt,
                     discord_user_id=str(ctx.author.id),
                     guild_id=db_channel.guild_id,
                 )
                 session.add(db_agent)
-                await session.commit()
+                await session.flush()
                 await session.refresh(db_agent)
 
                 # Update channel with new agent
                 db_channel.agent_id = db_agent.id
                 await session.commit()
+                await session.refresh(db_channel)
+                await session.refresh(db_agent)
 
                 try:
                     await ctx.guild.owner.send(
                         f"✅ **New Agent Created** in {ctx.guild.name} #{ctx.channel.name}\n"
                         f"**Instruction:** {prompt}"
                     )
-
                     if ctx.message:
                         await ctx.message.delete()
                 except Exception as e:
@@ -107,7 +105,7 @@ async def instruction(ctx, *, prompt: str):
 
         except Exception as e:
             await session.rollback()
-            logger.error(f"Error managing agent for instruction command: {e}")
+            logger.exception(f"Error managing agent for instruction command: {e}")
             await ctx.send(
                 "❌ An error occurred while saving the instruction. Please try again."
             )
