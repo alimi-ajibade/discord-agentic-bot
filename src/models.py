@@ -99,7 +99,7 @@ class Channel(SharedModel):
         nullable=False,
     )
     agent_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("agents.id"), unique=True, nullable=False
+        UUID(as_uuid=True), ForeignKey("agents.id"), unique=True, nullable=True
     )
 
     agent: Mapped["Agent"] = relationship(back_populates="channel")
