@@ -1,6 +1,8 @@
+from discord import Message as DiscordMessageContext
 from discord.channel import DMChannel
 from sqlalchemy import select
 
+from src.agent.factory import create_agent
 from src.bot.bot import bot
 from src.core.database import AsyncSessionLocal
 from src.core.logging import logger
@@ -8,7 +10,11 @@ from src.models import Channel, Guild, Message, User
 
 
 @bot.event
-async def on_message(message):
+async def on_message(message: DiscordMessageContext):
+    if not message.content.strip():
+        await bot.process_commands(message)
+        return
+
     # Only respond when the bot is mentioned
     if bot.user.mentioned_in(message):
         content_without_mention = message.content.replace(
@@ -22,6 +28,22 @@ async def on_message(message):
         else:
             await message.channel.send(f"You mentioned me, {message.author.name}!")
 
+        # await save_message_to_db(message)
+
+        agent = create_agent()
+        feedback = await agent.ainvoke(
+            user_request=content_without_mention,
+            messageCtx=message,
+            user_id=str(message.author.id) if message.author else None,
+            instruction="You are a helpful assistant.",
+        )
+
+        logger.info(f"Agent feedback: {feedback}")
+
+        await bot.process_commands(message)
+
+
+async def save_message_to_db(message: DiscordMessageContext):
     # Save message to database
     async with AsyncSessionLocal() as session:
         try:
@@ -98,5 +120,3 @@ async def on_message(message):
         except Exception as e:
             await session.rollback()
             logger.exception(f"Error saving message to database: {e}")
-
-    await bot.process_commands(message)
