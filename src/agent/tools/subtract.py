@@ -4,6 +4,7 @@ from langchain.tools.base import BaseTool
 class SubtractTool(BaseTool):
     name: str = "subtract"
     description: str = "Subtracts two numbers."
+    return_direct: bool = False
 
     def _run(self, a: int, b: int) -> str:
         """Subtract b from a and return the result."""
