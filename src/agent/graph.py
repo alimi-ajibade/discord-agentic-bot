@@ -1,6 +1,8 @@
+import asyncio
 from contextlib import redirect_stdout
 import io
-from typing import Literal, TypedDict
+from typing import Annotated, Literal, NotRequired, TypedDict
+from uuid import uuid4
 
 from discord import Message as DiscordMessageContext
 from discord.ext.commands import Context as DiscordCommandContext
@@ -8,11 +10,12 @@ from langchain.tools import BaseTool
 from langchain_core.language_models.chat_models import (
     BaseChatModel,
 )
-from langchain_core.messages import BaseMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.constants import END, START
 from langgraph.graph import StateGraph
+from langgraph.graph.message import add_messages
+from langgraph.managed import RemainingSteps
 from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel
 
@@ -30,8 +33,8 @@ class AgentState(TypedDict):
     user_request: str
     validation_approved: bool
     validation_feedback: str | None
-    messages: list[BaseMessage]
-    remaining_steps: int
+    messages: Annotated[list, add_messages]
+    remaining_steps: NotRequired[RemainingSteps]
 
 
 class AgentGraph:
@@ -65,6 +68,7 @@ class AgentGraph:
 
         checkpointer = InMemorySaver()
         self.compiled_graph = self._builder.compile(checkpointer=checkpointer)
+        # self.compiled_graph.get_graph().draw_mermaid_png(output_file_path="graph.png")
 
     async def _validate_task(self, state: AgentState) -> dict:
         logger.info("--------📝 validating task--------")
@@ -120,6 +124,23 @@ class AgentGraph:
             return "success"
         return "failure"
 
+    async def _alog_executor_stream(self, stream):
+        async for s in stream:
+            messages = s[-1]["messages"]
+
+            if len(messages) > 0:
+                message = messages[-1]
+
+                if isinstance(message, tuple):
+                    logger.debug(message)
+
+                else:
+                    with io.StringIO() as buf, redirect_stdout(buf):
+                        message.pretty_print()
+                        pretty_output = buf.getvalue()
+
+                    logger.debug(f"{pretty_output}")
+
     async def ainvoke(
         self,
         user_request: str,
@@ -129,15 +150,6 @@ class AgentGraph:
         config: RunnableConfig | None = None,
         user_id: str | None = None,
     ):
-        # # Initialize with system message and user request
-        # initial_messages = [
-        #     SystemMessage(
-        #         content=instruction
-        #         or "You are a helpful assistant that can use tools to answer questions."
-        #     ),
-        #     HumanMessage(content=user_request),
-        # ]
-
         initial_state = AgentState(
             instruction=instruction,
             messageCtx=messageCtx,
@@ -146,7 +158,7 @@ class AgentGraph:
             user_request=user_request,
             validation_approved=False,
             validation_feedback=None,
-            messages=[],
+            messages=[{"content": user_request, "role": "user"}],
             remaining_steps=10,
         )
 
@@ -169,22 +181,25 @@ class AgentGraph:
         graph_state = await self.compiled_graph.aget_state(config)
         return graph_state.values.get("validation_feedback")
 
-    async def _alog_executor_stream(self, stream):
-        async for s in stream:
-            try:
-                messages = s[-1].get("messages", [])
 
-                if len(messages) > 0:
-                    message = messages[-1]
+async def main():
+    from src.agent.tools.add import AddTool
+    from src.agent.tools.subtract import SubtractTool
 
-                    if isinstance(message, tuple):
-                        logger.debug(message)
+    # Create tools
+    tools = [AddTool(), SubtractTool()]
 
-                    else:
-                        with io.StringIO() as buf, redirect_stdout(buf):
-                            message.pretty_print()
-                            pretty_out = buf.getvalue()
+    # Create the agent graph
+    graph = AgentGraph(tools=tools)
 
-                        logger.debug(f"\n{pretty_out}")
-            except Exception as e:
-                logger.error(f"Error processing stream item: {e}")
+    # Test the graph with a simple request
+    user_request = "What is 5 plus 3?"
+    result = await graph.ainvoke(
+        user_request=user_request, messageCtx=None, commandCtx=None, user_id=uuid4()
+    )
+
+    print(f"Test completed. Validation feedback: {result}")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
