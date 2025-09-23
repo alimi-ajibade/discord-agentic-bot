@@ -179,7 +179,8 @@ class AgentGraph:
         )
 
         graph_state = await self.compiled_graph.aget_state(config)
-        return graph_state.values.get("validation_feedback")
+
+        return graph_state.values.get("messages")[-1].content
 
 
 async def main():
