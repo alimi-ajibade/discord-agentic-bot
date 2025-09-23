@@ -1,11 +1,7 @@
-import asyncio
 from contextlib import redirect_stdout
 import io
 from typing import Annotated, Literal, NotRequired, TypedDict
-from uuid import uuid4
 
-from discord import Message as DiscordMessageContext
-from discord.ext.commands import Context as DiscordCommandContext
 from langchain.tools import BaseTool
 from langchain_core.language_models.chat_models import (
     BaseChatModel,
@@ -27,8 +23,6 @@ CUSTOM_AGENT_INSTRUCTION = ""
 
 class AgentState(TypedDict):
     instruction: str
-    messageCtx: DiscordMessageContext | None
-    commandCtx: DiscordCommandContext | None
     user_id: str | None
     user_request: str
     validation_approved: bool
@@ -144,16 +138,12 @@ class AgentGraph:
     async def ainvoke(
         self,
         user_request: str,
-        messageCtx: DiscordMessageContext | None,
-        commandCtx: DiscordCommandContext | None = None,
         instruction: str = CUSTOM_AGENT_INSTRUCTION,
         config: RunnableConfig | None = None,
         user_id: str | None = None,
     ):
         initial_state = AgentState(
             instruction=instruction,
-            messageCtx=messageCtx,
-            commandCtx=commandCtx,
             user_id=user_id,
             user_request=user_request,
             validation_approved=False,
@@ -181,26 +171,3 @@ class AgentGraph:
         graph_state = await self.compiled_graph.aget_state(config)
 
         return graph_state.values.get("messages")[-1].content
-
-
-async def main():
-    from src.agent.tools.add import AddTool
-    from src.agent.tools.subtract import SubtractTool
-
-    # Create tools
-    tools = [AddTool(), SubtractTool()]
-
-    # Create the agent graph
-    graph = AgentGraph(tools=tools)
-
-    # Test the graph with a simple request
-    user_request = "What is 5 plus 3?"
-    result = await graph.ainvoke(
-        user_request=user_request, messageCtx=None, commandCtx=None, user_id=uuid4()
-    )
-
-    print(f"Test completed. Validation feedback: {result}")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
