@@ -1,3 +1,4 @@
+from discord.ext.commands import Context
 from sqlalchemy import select
 
 from src.bot.bot import bot
@@ -7,7 +8,7 @@ from src.models import Agent, Channel
 
 
 @bot.command()
-async def instruction(ctx, *, prompt: str):
+async def instruction(ctx: Context, *, prompt: str):
     """Instruction command that sets or updates agent instructions for this channel."""
     if ctx.author != ctx.guild.owner:
         await ctx.send(

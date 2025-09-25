@@ -208,3 +208,4 @@ __marimo__/
 
 .ruff_cache
 private
+.vscode/launch.json

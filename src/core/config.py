@@ -8,6 +8,11 @@ class Settings(BaseSettings):
 
     DISCORD_TOKEN: str
 
+    LANGSMITH_TRACING: bool = True
+    LANGSMITH_ENDPOINT: str = "https://api.smith.langchain.com"
+    LANGSMITH_API_KEY: str
+    LANGSMITH_PROJECT: str = "discord-agentic-bot"
+
     model_config = SettingsConfigDict(env_file="./.env")
 
 
