@@ -9,6 +9,7 @@ from src.agent.tools import (
     GetUserInfo,
     ReactToMessage,
     SendMessage,
+    google_search,
 )
 from src.core.llm import get_llm
 
@@ -38,6 +39,7 @@ def create_agent(
 ):
     base_tools = build_base_tools(message_ctx=message_ctx, command_ctx=command_ctx)
     tools.extend(base_tools)
+    tools.extend([google_search])
     agent = AgentGraph(
         llm=llm,
         tools=tools,  # type: ignore
