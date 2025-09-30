@@ -15,6 +15,7 @@ from langgraph.managed import RemainingSteps
 from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel
 
+from src.agent.prompts import BASE_INSTRUCTION
 from src.core import logger
 from src.core.llm import get_llm
 
@@ -94,7 +95,12 @@ class AgentGraph:
         }
 
     async def _get_agent(self, state: AgentState):
-        prompt = f"perform the task {state['user_request']}. Keep in mind that this is your base instruction {state['instruction']}"
+        prompt = BASE_INSTRUCTION.format(
+            admin_instruction=state.get(
+                "instruction", "You are an assistant on a Discord server."
+            )
+        )
+        logger.info(f"Agent prompt: {prompt}")
         if self.executor_agent:
             return self.executor_agent
         logger.info("--------📝 executing task--------")
@@ -114,6 +120,7 @@ class AgentGraph:
         self, state: AgentState
     ) -> Literal["success", "failure"]:
         logger.info("--------📝 handling validation--------")
+        logger.debug(f"validation approved? = {state.get('validation_approved')} ")
         if state.get("validation_approved"):
             return "success"
         return "failure"
