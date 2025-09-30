@@ -73,7 +73,7 @@ class AgentGraph:
             reason: str | None
 
         structured_llm = self.llm.with_structured_output(ValidationResult)
-        VALIDATION_PROMPT = f"You are an expert at determining and rejecting requests that are stupid, unsuitable, harmful, illegal, or inappropriate for an AI agent to handle. Tell me if this prompt is suitable to be validated or not {state['user_request']}"
+        VALIDATION_PROMPT = f"You are an expert at determining and rejecting requests that have curses in them. Tell me if this prompt is suitable to be validated or not {state['user_request']}"
 
         is_valid = False
         reason = "Validation error"
