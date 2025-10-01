@@ -1,6 +1,7 @@
 from discord import Message as DiscordMessageContext
 from discord.channel import DMChannel
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from src.agent.factory import create_agent
 from src.bot.bot import bot
@@ -11,35 +12,71 @@ from src.models import Channel, Guild, Message, User
 
 @bot.event
 async def on_message(message: DiscordMessageContext):
-    if not message.content.strip():
-        await bot.process_commands(message)
-        return
+    try:
+        if not message.content.strip():
+            await bot.process_commands(message)
+            return
 
-    # Only respond when the bot is mentioned
-    if bot.user.mentioned_in(message):
-        content_without_mention = message.content.replace(
-            f"<@{bot.user.id}>", ""
-        ).strip()
+        # Only respond when the bot is mentioned
+        if bot.user.mentioned_in(message):
+            content_without_mention = message.content.replace(
+                f"<@{bot.user.id}>", ""
+            ).strip()
 
-        if content_without_mention == "":
-            await message.channel.send(f"Hello @{message.author.name}!")
+            if content_without_mention == "":
+                await message.channel.send(f"Hello @{message.author.name}!")
+                return
+
+            await save_message_to_db(message)
+
+            agent = create_agent(message_ctx=message)
+            response = await agent.ainvoke(
+                user_request=content_without_mention,
+                user_id=str(message.author.id) if message.author else None,
+                instruction=await get_admin_instruction(
+                    str(message.guild.id), channel_id=str(message.channel.id)
+                ),
+            )
+            logger.debug(f"response: {response}")
+
+            await bot.process_commands(message)
             return
 
         await save_message_to_db(message)
-
-        agent = create_agent(message_ctx=message)
-        response = await agent.ainvoke(
-            user_request=content_without_mention,
-            user_id=str(message.author.id) if message.author else None,
-            instruction="You are a helpful assistant.",
-        )
-        logger.debug(f"response: {response}")
-
         await bot.process_commands(message)
-        return
+    except Exception as e:
+        logger.exception(f"Error handling message: {e}")
+        # Optionally, send an error message to the channel
+        try:
+            await message.channel.send(
+                "Sorry, an error occurred while processing your message."
+            )
+        except Exception as send_error:
+            logger.exception(f"Error sending error message: {send_error}")
 
-    await save_message_to_db(message)
-    await bot.process_commands(message)
+
+async def get_admin_instruction(guild_id: str, channel_id: str) -> str:
+    if not guild_id and not channel_id:
+        return ""
+    async with AsyncSessionLocal() as session:
+        try:
+            result = await session.execute(
+                select(Channel)
+                .where(
+                    Channel.discord_channel_id == channel_id,
+                    Channel.guild.has(Guild.discord_guild_id == guild_id),
+                )
+                .options(selectinload(Channel.agent))
+            )
+            db_channel = result.scalar_one_or_none()
+
+            if db_channel and db_channel.agent and db_channel.agent.instruction:
+                return db_channel.agent.instruction or ""
+        except Exception as e:
+            logger.exception(
+                f"Error retrieving admin instruction for guild {guild_id}: {e}"
+            )
+    return ""
 
 
 async def save_message_to_db(message: DiscordMessageContext):
