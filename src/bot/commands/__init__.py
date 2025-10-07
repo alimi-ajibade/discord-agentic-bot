@@ -1,1 +1,1 @@
-from . import instruction, search
+from . import find, instruction

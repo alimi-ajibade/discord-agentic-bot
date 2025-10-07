@@ -14,7 +14,7 @@ class SearchResult(BaseModel):
 
 
 @bot.command()
-async def searchs(ctx: Context, *, query: str):
+async def find(ctx: Context, *, query: str):
     """Search command that responds with the search query."""
     logger.info(f"Search command invoked with query: {query}")
 
