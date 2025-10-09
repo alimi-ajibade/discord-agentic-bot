@@ -1,4 +1,5 @@
 import asyncio
+from collections.abc import Sequence
 
 from google import genai
 from google.genai.types import ContentEmbedding, EmbedContentConfig
@@ -86,7 +87,7 @@ async def generate_embeddings(batch_size: int = 50, sleep_seconds: int = 5) -> N
             logger.info(f"Embedded {len(messages_to_embed)} messages in this batch.")
 
 
-async def find_similar_messages(query: str, top_k: int = 5) -> list[Message]:
+async def find_similar_messages(query: str, top_k: int = 5) -> Sequence[Message]:
     query_embedding = get_embedding(query)
     if not query_embedding:
         return []
