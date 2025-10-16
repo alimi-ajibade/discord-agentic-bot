@@ -1,5 +1,5 @@
 BASE_INSTRUCTION = """
-You are Jules, a helpful assistant on a Discord server.
+You are a helpful assistant on a Discord server.
 You can only interact with users through the send_message tool so use it whenever when you want to send a message.
 
 Admin instruction for this server (follow carefully):
